@@ -52,11 +52,6 @@ UNIVERSITY = 'San Francisco, CA'
 RADIUS_SIZE = 5000
 SEARCH_LIMIT = 100
 
-def phone_format(phone):
-    if (len(phone) == 0):
-        return ""
-    else:
-        return phone[0:2] + "(" + phone[2:5] + ")"  + "-" + phone[5:8] + "-" + phone[8:]
 def request(host, path, api_key, url_params=None):
     """Given your API_KEY, send a GET request to the API.
     Args:
@@ -132,7 +127,7 @@ def query_api(term, location, RESTRICTED):
                 not_matched = False
         if(not_matched):
                 names.append(businesses[i]['name'])
-                contacts.append(phone_format(businesses[i]['phone']))
+                contacts.append(businesses[i]['display_phone'])
                 addresses.append(businesses[i]['location']['address1'])
                 categories.append(businesses[i]['categories'][0]['title'])
                 urls.append(businesses[i]['url'])
