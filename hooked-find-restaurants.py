@@ -20,8 +20,6 @@ import pprint
 import requests
 import sys
 import urllib
-import facebook
-
 
 try:
     # For Python 3.0 and later
@@ -148,7 +146,7 @@ def query_api(term, location, RESTRICTED):
 
 def main():
     # Takes in User Input
-    UNIVERSITY = raw_input("University: ")
+    UNIVERSITY = input("University: ")
     #Reads list of restaurants not to be included in target from restaurants.txt into a list restricted_text
     restricted_text = open('restricted.txt', 'r')
     RESTRICTED = restricted_text.readlines()
@@ -165,7 +163,7 @@ def main():
             )
         )
 
-    raw_input("Press Enter to continue...")
+    input("Press Enter to continue...")
 
 
 if __name__ == '__main__':
