@@ -120,9 +120,7 @@ def query_api(term, location, RESTRICTED):
 
     names = []
     contacts = []
-    addresses = []
-    urls = []
-    categories = []
+    dists = []
     #Create a list from the names
     #Cross reference with restricted and delete elements that are matching
     for i in range(0, len(businesses)):
@@ -133,18 +131,14 @@ def query_api(term, location, RESTRICTED):
         if(not_matched):
                 names.append(businesses[i]['name'])
                 contacts.append(phone_format(businesses[i]['phone']))
-                addresses.append(businesses[i]['location']['address1'])
-                categories.append(businesses[i]['categories'][0]['title'])
-                urls.append(businesses[i]['url'])
+                dists.append(str(businesses[i]['distance'] / 1600))
+
     list_restaurants = open('target_restaurants.txt', 'w')
     for x in range(0, len(names)):
         try:
             list_restaurants.write("%s\t" % names[x])
             list_restaurants.write("%s\t" % contacts[x])
-            list_restaurants.write("%s\t" % addresses[x])
-            list_restaurants.write("%s\t" % categories[x])
-            list_restaurants.write("%s\n" % urls[x])
-
+            list_restaurants.write("%s\n" % dists[x])
         except UnicodeEncodeError:
             continue
 
