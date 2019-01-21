@@ -49,8 +49,6 @@ FACEBOOK_API_BASE_CALL = 'http:// https://graph.facebook.com/'
 # Defaults for search
 DEFAULT_TERM = 'restaurants'
 UNIVERSITY = 'San Francisco, CA'
-RADIUS_SIZE = 5000
-SEARCH_LIMIT = 100
 
 def request(host, path, api_key, url_params=None):
     """Given your API_KEY, send a GET request to the API.
@@ -75,7 +73,7 @@ def request(host, path, api_key, url_params=None):
     return response.json()
 
 
-def search(api_key, term, location, offset):
+def search(api_key, term, location, offset, RADIUS_SIZE):
     """Query the Search API by a search term and location.
     Args:
         term (str): The search term passed to the API.
@@ -83,6 +81,7 @@ def search(api_key, term, location, offset):
     Returns:
         dict: The JSON response from the request.
     """
+    #DEBUG
 
     url_params = {
         'term': term.replace(' ', '+'),
@@ -93,13 +92,13 @@ def search(api_key, term, location, offset):
     }
     return request(API_HOST, SEARCH_PATH, api_key, url_params=url_params)
 
-def query_api(term, location, RESTRICTED):
+def query_api(term, location, RADIUS_SIZE, RESTRICTED):
     """Queries the API by the input values from the user.
     Args:
         term (str): The search term to query.
         location (str): The location of the business to query.
     """
-    response = search(API_KEY, term, location, 0)
+    response = search(API_KEY, term, location, 0, RADIUS_SIZE)
     businesses = response.get('businesses')
 
     if not businesses:
@@ -108,7 +107,7 @@ def query_api(term, location, RESTRICTED):
     numFound = 0
     while len(businesses) >= 50 + numFound:
         numFound += 50
-        response = search(API_KEY, term, location, numFound)
+        response = search(API_KEY, term, location, numFound, RADIUS_SIZE)
         more_businesses = response.get('businesses')
         if more_businesses is not None:
             businesses.extend(more_businesses)
@@ -118,6 +117,10 @@ def query_api(term, location, RESTRICTED):
     addresses = []
     urls = []
     categories = []
+    city = []
+    state = []
+    zipcode =  []
+    radius = []
     #Create a list from the names
     #Cross reference with restricted and delete elements that are matching
     for i in range(0, len(businesses)):
@@ -125,10 +128,14 @@ def query_api(term, location, RESTRICTED):
         for j in range (0, len(RESTRICTED)):
             if(businesses[i]['name'] == RESTRICTED[j].strip('\n')):
                 not_matched = False
-        if(not_matched):
+        if(not_matched and (businesses[i]['distance']) < RADIUS_SIZE):
                 names.append(businesses[i]['name'])
+                radius.append(businesses[i]['distance'] / 1600)
                 contacts.append(businesses[i]['display_phone'])
                 addresses.append(businesses[i]['location']['address1'])
+                city.append(businesses[i]['location']['city'])
+                state.append(businesses[i]['location']['state'])
+                zipcode.append(businesses[i]['location']['zip_code'])
                 categories.append(businesses[i]['categories'][0]['title'])
                 urls.append(businesses[i]['url'])
     list_restaurants = open('target_restaurants.txt', 'w')
@@ -136,10 +143,13 @@ def query_api(term, location, RESTRICTED):
         try:
             list_restaurants.write("%s\t" % names[x])
             list_restaurants.write("%s\t" % contacts[x])
+            list_restaurants.write("%s\t" % radius[x])
             list_restaurants.write("%s\t" % addresses[x])
+            list_restaurants.write("%s\t" % city[x])
+            list_restaurants.write("%s\t" % state[x])
+            list_restaurants.write("%s\t" % zipcode[x])
             list_restaurants.write("%s\t" % categories[x])
             list_restaurants.write("%s\n" % urls[x])
-
         except UnicodeEncodeError:
             continue
 
@@ -147,14 +157,15 @@ def query_api(term, location, RESTRICTED):
 
 def main():
     # Takes in User Input
-    UNIVERSITY = input("University: ")
+    UNIVERSITY = input("Location: ")
+    u_limit = int(input("Radius (in miles): "))
     #Reads list of restaurants not to be included in target from restaurants.txt into a list restricted_text
     restricted_text = open('restricted.txt', 'r')
     RESTRICTED = restricted_text.readlines()
     restricted_text.close()
 
     try:
-        query_api(DEFAULT_TERM, UNIVERSITY, RESTRICTED)
+        query_api(DEFAULT_TERM, UNIVERSITY, u_limit * 1600, RESTRICTED)
     except HTTPError as error:
         sys.exit(
             'Encountered HTTP error {0} on {1}:\n {2}\nAbort program.'.format(
@@ -164,7 +175,7 @@ def main():
             )
         )
 
-    input("Press Enter to continue...")
+    
 
 
 if __name__ == '__main__':
